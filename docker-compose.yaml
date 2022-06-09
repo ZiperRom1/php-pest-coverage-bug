@@ -1,0 +1,79 @@
+version: "3.9"
+
+networks:
+  es-net:
+    driver: bridge
+
+volumes:
+  es-data:
+    driver: local
+  kibana-data:
+    driver: local
+  kibana-config:
+    driver: local
+
+services:
+  minimal-reproducible-example:
+    image: minimal-reproducible-example/cli:1.0.0
+    container_name: minimal-reproducible-example-cli
+    networks:
+      - es-net
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - .:/app
+    entrypoint: ./docker/php/docker-entrypoint.sh
+
+  minimal-reproducible-example-dev:
+    image: minimal-reproducible-example/cli-dev:1.0.0
+    container_name: minimal-reproducible-example-cli-dev
+    networks:
+      - es-net
+    build:
+      context: .
+      dockerfile: ./docker/php-dev/Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      PHP_IDE_CONFIG: serverName=Docker
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    expose:
+      - 9000 # Xdebug for host IDE integration
+      - 9003 # Xdebug for host IDE integration
+    entrypoint: ./docker/php-dev/docker-entrypoint.sh
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION}
+    container_name: elasticsearch
+    networks:
+      - es-net
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      - ${PWD}/docker/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - "${ELASTICSEARCH_PORT}:${ELASTICSEARCH_PORT}"
+      - "9300:9300"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION}
+    container_name: kibana
+    networks:
+      - es-net
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:${ELASTICSEARCH_PORT}
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - kibana-config:/usr/share/kibana/config
+    ports:
+      - "${KIBANA_PORT}:${KIBANA_PORT}"
+    depends_on:
+      - elasticsearch

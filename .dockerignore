@@ -1,0 +1,8 @@
+### Custom
+
+.git
+.idea
+.dockerignore
+.editorconfig
+.gitattributes
+.gitignore
