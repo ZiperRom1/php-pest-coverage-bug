@@ -10,11 +10,11 @@ This php env attempt to reproduce a [Pest](https://pestphp.com/) bug with the `-
 
 *Launch the Docker containers in background*
 
-`docker-compose up -d elasticsearch kibana minimal-reproducible-example-cli`
+`docker-compose up -d elasticsearch kibana minimal-reproducible-example`
 
 *Connect to the php container*
 
-`docker exec -it -e SHELL=bash minimal-reproducible-example bash`
+`docker exec -it -e SHELL=bash minimal-reproducible-example-cli bash`
 
 *Launch the tests with the `--coverage` option*
 
@@ -39,3 +39,7 @@ bash-5.1# ./vendor/bin/pest --coverage
 
 list [--raw] [--format FORMAT] [--short] [--] [<namespace>]
 ```
+
+## Fix
+
+Fixed by removing `<directory suffix=".php">./app</directory>` in **phpunit.xml**.
